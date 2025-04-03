@@ -1,11 +1,18 @@
-services:
+version: "3.8"
 
+services:
   backend:
     build:
       context: .
       dockerfile: backend.Dockerfile
     env_file:
       - .env
+    ports:
+      - "8080:8080"  # Backend API accessible sur http://localhost:8080
+    networks:
+      - saas-app
+    depends_on:
+      - db
 
   frontend:
     build:
@@ -13,3 +20,24 @@ services:
       dockerfile: frontend.Dockerfile
     env_file:
       - .env
+    ports:
+      - "3000:3000"  # Frontend accessible sur http://localhost:3000
+    networks:
+      - saas-app
+
+  db:
+    image: mongo
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    ports:
+      - "27017:27017"  # MongoDB accessible directement (optionnel)
+    networks:
+      - saas-app
+
+networks:
+  saas-app:
