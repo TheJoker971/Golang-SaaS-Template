@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"time"
-
+	"os"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // Définition des structures avec des champs exportés et des tags BSON
 type User struct {
-	ID       int64  `bson:"_id,omitempty"`
+	ID       string  `bson:"_id,omitempty"`
 	Pseudo   string `bson:"pseudo"`
 	Email    string `bson:"email"`
 	Password string `bson:"password"`
@@ -33,29 +33,29 @@ type Login struct {
 	Password string
 }
 
+var Collection,Client = connectDb()
+
 // ConnectDb établit une connexion à la base de données MongoDB et retourne une référence à la collection "users"
-func ConnectDb() (*mongo.Collection, *mongo.Client) {
+func connectDb() (*mongo.Collection, *mongo.Client) {
 	uri, exists := os.LookupEnv("DATABASE_URL")
 	if !exists {
-		log.Fatal("Database URL not found")
+		uri = "mongodb://mongoadmin:secret@localhost:27017/"
 	}
 
-	// Crée une nouvelle instance de client
 	clientOptions := options.Client().ApplyURI(uri)
 	client, err := mongo.NewClient(clientOptions)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Établit la connexion avec un contexte de timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
+
 	err = client.Connect(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// Vérifie la connexion
 	err = client.Ping(ctx, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -64,11 +64,30 @@ func ConnectDb() (*mongo.Collection, *mongo.Client) {
 	fmt.Println("Connected to MongoDB!")
 
 	collection := client.Database("saas").Collection("users")
+
+	// ⚠️ Créer les index uniques
+	indexes := []mongo.IndexModel{
+		{
+			Keys:    bson.D{{Key: "pseudo", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		},
+		{
+			Keys:    bson.D{{Key: "email", Value: 1}},
+			Options: options.Index().SetUnique(true),
+		},
+	}
+
+	_, err = collection.Indexes().CreateMany(ctx, indexes)
+	if err != nil {
+		log.Fatal("Erreur création index uniques : ", err)
+	}
+
 	return collection, client
 }
 
+
 // Register insère un nouvel utilisateur dans la collection
-func Register(collection *mongo.Collection, user Register) {
+func register(collection *mongo.Collection, user Register) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -81,41 +100,48 @@ func Register(collection *mongo.Collection, user Register) {
 
 	_, err := collection.InsertOne(ctx, newUser)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Erreur lors de l'insertion de l'utilisateur : %v", err)
+		return err
 	}
 
-	fmt.Println("User inserted in database")
+	fmt.Println("Utilisateur inséré dans la base de données")
+	return nil
 }
 
-// GetUserForLog recherche un utilisateur par pseudo ou email et mot de passe
-func GetUserForLog(collection *mongo.Collection, login Login) User {
+
+func getUserForLog(login Login) (User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	filter := bson.M{
-		"$and": []bson.M{
-			{"$or": []bson.M{
-				{"pseudo": login.Login},
-				{"email": login.Login},
-			}},
-			{"password": login.Password},
+		"$or": []bson.M{
+			{"pseudo": login.Login},
+			{"email": login.Login},
 		},
 	}
 
 	var user User
-	err := collection.FindOne(ctx, filter).Decode(&user)
+	err := Collection.FindOne(ctx, filter).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			log.Fatal("User not found")
+			return user, fmt.Errorf("utilisateur introuvable")
 		}
-		log.Fatal(err)
+		return user, err
 	}
 
-	return user
+	// Comparaison sécurisée du mot de passe
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(login.Password))
+	if err != nil {
+		return user, fmt.Errorf("mot de passe incorrect")
+	}
+
+	fmt.Printf("Bienvenue à %s !\n", user.Pseudo)
+	return user, nil
 }
 
-func GetAllUsers(collection *mongo.Collection) <-chan []User {
-	out := make(chan []User)
+
+func getAllUsers(collection *mongo.Collection) <-chan User {
+	out := make(chan User)
 
 	go func() {
 		defer close(out)
@@ -126,7 +152,7 @@ func GetAllUsers(collection *mongo.Collection) <-chan []User {
 		filter := bson.M{"admin": false}
 		cursor, err := collection.Find(ctx, filter)
 		if err != nil {
-			log.Println("❌ Erreur Find:", err)
+			log.Panic("❌ Erreur Find:", err)
 			return
 		}
 		defer cursor.Close(ctx)
@@ -134,10 +160,10 @@ func GetAllUsers(collection *mongo.Collection) <-chan []User {
 		for cursor.Next(ctx) {
 			var user User
 			if err := cursor.Decode(&user); err != nil {
-				log.Println("⚠️ Erreur Decode:", err)
+				log.Panic("⚠️ Erreur Decode:", err)
 				continue
 			}
-			out <- user // envoie le user directement dans le channel
+			out <- user
 		}
 
 		if err := cursor.Err(); err != nil {

@@ -1,11 +1,16 @@
-services:
+version: "3.8"
 
+services:
   backend:
     build:
       context: .
       dockerfile: backend.Dockerfile
     env_file:
       - .env
+    networks:
+      - saas-app
+    depends_on:
+      - db
 
   frontend:
     build:
@@ -13,3 +18,20 @@ services:
       dockerfile: frontend.Dockerfile
     env_file:
       - .env
+    networks:
+      - saas-app
+
+  db:
+    image: mongo
+    restart: always
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    networks:
+      - saas-app
+
+networks:
+  saas-app:

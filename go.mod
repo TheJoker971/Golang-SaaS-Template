@@ -1,4 +1,4 @@
-module github.com/TheJoker971/Golang-SaaS-Template
+module saas-template
 
 go 1.24.0
 
