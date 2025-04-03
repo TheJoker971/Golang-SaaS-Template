@@ -1,6 +1,6 @@
 module github.com/TheJoker971/Golang-SaaS-Template
 
-go 1.24.0
+go 1.24
 
 require (
 	github.com/golang/snappy v0.0.4 // indirect

@@ -1,27 +1,31 @@
 
 import { ReactNode } from "react"
-import { cn } from "../../lib/utils"
 
-export function Card({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("bg-white shadow rounded-lg", className)}>{children}</div>
+interface CardProps {
+  children: ReactNode
+  className?: string
 }
 
-export function CardHeader({ children }: { children: ReactNode }) {
-  return <div className="border-b px-4 py-2">{children}</div>
+export function Card({ children, className }: CardProps) {
+  return <div className={`card ${className ?? ""}`}>{children}</div>
 }
 
-export function CardTitle({ children }: { children: ReactNode }) {
-  return <h2 className="text-lg font-semibold">{children}</h2>
+export function CardHeader({ children, className }: CardProps) {
+  return <div className={`card-header ${className ?? ""}`}>{children}</div>
 }
 
-export function CardDescription({ children }: { children: ReactNode }) {
-  return <p className="text-sm text-gray-500">{children}</p>
+export function CardTitle({ children, className }: CardProps) {
+  return <h2 className={`card-title ${className ?? ""}`}>{children}</h2>
 }
 
-export function CardContent({ children }: { children: ReactNode }) {
-  return <div className="p-4">{children}</div>
+export function CardDescription({ children, className }: CardProps) {
+  return <p className={`card-description ${className ?? ""}`}>{children}</p>
 }
 
-export function CardFooter({ children }: { children: ReactNode }) {
-  return <div className="border-t px-4 py-2">{children}</div>
+export function CardContent({ children, className }: CardProps) {
+  return <div className={`card-content ${className ?? ""}`}>{children}</div>
+}
+
+export function CardFooter({ children, className }: CardProps) {
+  return <div className={`card-footer ${className ?? ""}`}>{children}</div>
 }
