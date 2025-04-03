@@ -75,7 +75,7 @@ func loginHandler() http.HandlerFunc {
 func listenServer() {
 	http.HandleFunc("/register", registerHandler())
 	http.HandleFunc("/login",loginHandler())
-	port := 8080
+	port := 80
 	addr := fmt.Sprintf(":%d", port)
 	fmt.Printf("🚀 Serveur en écoute sur http://localhost%s\n", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
