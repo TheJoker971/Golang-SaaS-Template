@@ -1,28 +1,29 @@
 # Étape 1 : Compilation de l'application Go
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24rc1-alpine AS builder
 
-# Définir le répertoire de travail
+
 WORKDIR /app
 
-# Copier le code source du backend uniquement
+# Copier les fichiers de dépendances Go en premier
+COPY backend/go.mod backend/go.sum ./backend/
+
+# Télécharger les dépendances
+RUN cd backend && go mod tidy
+
+# Copier le reste du code backend
 COPY backend ./backend
 
-# Installer les dépendances
-RUN go mod download
+# Compiler l'application
+RUN cd backend && go build -o /app/backend .
 
-# Compiler l'exécutable Go à partir du dossier backend
-RUN go build -o backend ./backend
-
-# Étape 2 : Container minimal pour exécution
+# Étape 2 : Image finale légère
 FROM alpine:latest
 
 WORKDIR /app
 
-# Copier uniquement l'exécutable du builder
+# Copier le binaire compilé
 COPY --from=builder /app/backend .
 
-# Exposer le port utilisé par ton backend
 EXPOSE 8080
 
-# Exécuter l'application Go
 ENTRYPOINT ["./backend"]
