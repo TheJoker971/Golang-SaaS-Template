@@ -11,7 +11,7 @@ COPY backend ./backend
 RUN go mod download
 
 # Compiler l'exécutable Go à partir du dossier backend
-RUN go build -o backend ./backend
+RUN go build -o backend ./backend/*.go
 
 # Étape 2 : Container minimal pour exécution
 FROM alpine:latest

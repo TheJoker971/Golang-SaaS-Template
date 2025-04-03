@@ -68,17 +68,33 @@ func loginHandler() http.HandlerFunc {
 	}
 }
 
+func enableCors(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*") // autoriser toutes les origines, ou mets "http://localhost:5173"
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
+}
+
 
 
 // --- SERVER ---
 
 func listenServer() {
 	http.HandleFunc("/register", registerHandler())
-	http.HandleFunc("/login",loginHandler())
-	port := 80
+	http.HandleFunc("/login", loginHandler())
+
+	port := 8080
 	addr := fmt.Sprintf(":%d", port)
 	fmt.Printf("🚀 Serveur en écoute sur http://localhost%s\n", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
+
+	// Utilisation du middleware CORS ici
+	if err := http.ListenAndServe(addr, enableCors(http.DefaultServeMux)); err != nil {
 		log.Fatalf("❌ Erreur serveur HTTP : %v", err)
 	}
 }

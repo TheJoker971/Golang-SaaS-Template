@@ -1,0 +1,96 @@
+
+:root {
+  --primary: #3b82f6;
+  --foreground: #ffffff;
+  --muted: #6b7280;
+  --bg: #f9fafb;
+  --card: #ffffff;
+  --shadow: rgba(0, 0, 0, 0.05);
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg);
+  color: #111827;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+header,
+footer {
+  background-color: var(--card);
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 0;
+}
+
+footer {
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+button {
+  background-color: var(--primary);
+  color: var(--foreground);
+  border: none;
+  padding: 0.5em 1em;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+button.outline {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+button.ghost {
+  background: none;
+  color: #111827;
+  text-align: left;
+  padding: 0.5rem;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px var(--shadow);
+  padding: 1rem;
+}
+
+.card-header {
+  margin-bottom: 0.5rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.card-description {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.card-content {
+  margin-top: 1rem;
+}
+
+.card-footer {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
