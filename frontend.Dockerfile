@@ -1,6 +1,6 @@
 FROM node:22.0.0-alpine AS builder
 
-COPY ./frontend. ./
+COPY ./frontend/my-front/. ./
 RUN npm install
 RUN npm run build
 
